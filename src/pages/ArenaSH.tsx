@@ -1,120 +1,145 @@
-// src/pages/ArenaSH.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import supabase from '../lib/supabase';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
-const missoes = [
-  { id: 1, cidade: "Fortaleza", local: "Centro de Evangelização Shalom", modalidades: ["Vôlei", "Futsal", "Beach Tênis"], responsavel: "Felipe (Regional NE)" },
-  { id: 2, cidade: "São Paulo", local: "Parque do Ibirapuera / Missão SP", modalidades: ["Corrida", "Skate", "Basquete"], responsavel: "Juliana (Regional SE)" },
-  { id: 3, cidade: "Brasília", local: "Eixão / Missão BSB", modalidades: ["Bike", "Vôlei de Praia"], responsavel: "Ricardo (Regional CO)" },
-  { id: 4, cidade: "Rio de Janeiro", local: "Praia de Copacabana", modalidades: ["Surf", "Vôlei", "Funcional"], responsavel: "Thiago (Regional SE)" },
-];
+function FlyToLocation({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center) {
+      map.flyTo(center, 12, { duration: 2 });
+    }
+  }, [center, map]);
+  return null;
+}
 
-const filtros = ["Todos", "Vôlei", "Futsal", "Skate", "Corrida", "Beach Tênis", "Bike"];
+const neonIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 export const ArenaSH = () => {
+  const [arenas, setArenas] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
-  const [filtroAtivo, setFiltroAtivo] = useState("Todos");
+  const [mapCenter, setMapCenter] = useState<[number, number]>([-15.7801, -47.9292]);
 
-  const missoesFiltradas = missoes.filter(m => 
-    (filtroAtivo === "Todos" || m.modalidades.includes(filtroAtivo)) &&
-    (m.cidade.toLowerCase().includes(busca.toLowerCase()))
+  useEffect(() => {
+    fetchArenas();
+  }, []);
+
+  async function fetchArenas() {
+    const { data, error } = await supabase
+      .from('arenas')
+      .select('*')
+      .order('city');
+    
+    if (!error) setArenas(data || []);
+    setLoading(false);
+  }
+
+  const arenasFiltradas = arenas.filter(a => 
+    a.city.toLowerCase().includes(busca.toLowerCase()) || 
+    a.modalities.join(' ').toLowerCase().includes(busca.toLowerCase())
   );
+
+  const handleCityClick = (lat: number, lng: number) => {
+    setMapCenter([lat, lng]);
+  };
 
   return (
     <div className="py-10 animate-fadeIn">
-      {/* HEADER */}
       <div className="mb-12">
         <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter">
           Arena <span className="text-sh-neon">SH</span>
         </h1>
-        <p className="text-sh-green font-bold uppercase tracking-widest text-sm mt-2">
-          Encontre o SPORTSH em qualquer missão.
+        <p className="text-sh-green font-bold uppercase tracking-widest text-sm mt-2 italic">
+          Onde o SPORTSH acontece
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* COLUNA ESQUERDA: BUSCA E LISTA */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Buscar missão ou cidade..." 
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white focus:border-sh-neon outline-none transition-all"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {filtros.map(f => (
-              <button 
-                key={f}
-                onClick={() => setFiltroAtivo(f)}
-                className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-tighter transition-all ${
-                  filtroAtivo === f ? 'bg-sh-neon text-sh-black' : 'bg-white/5 text-gray-400 border border-white/10 hover:border-sh-green'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+          <input 
+            type="text" 
+            placeholder="Buscar cidade ou esporte..." 
+            className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-sh-neon transition-all"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
 
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-            {missoesFiltradas.map(m => (
-              <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:border-sh-green/50 transition-all cursor-pointer group">
-                <h4 className="text-sh-neon font-black italic uppercase text-lg group-hover:tracking-wider transition-all">{m.cidade}</h4>
-                <p className="text-gray-400 text-xs mb-3">{m.local}</p>
+            {loading ? (
+              <p className="text-sh-green animate-pulse font-bold uppercase text-xs text-center">Mapeando Missões...</p>
+            ) : arenasFiltradas.map(arena => (
+              <div 
+                key={arena.id} 
+                onClick={() => handleCityClick(arena.latitude, arena.longitude)}
+                className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:border-sh-green/50 transition-all group cursor-pointer"
+              >
+                <h4 className="text-sh-neon font-black italic uppercase text-lg group-hover:tracking-wider transition-all">{arena.city}</h4>
+                <p className="text-gray-400 text-xs mb-3">{arena.location_name}</p>
                 <div className="flex flex-wrap gap-1 mb-4">
-                  {m.modalidades.map(mod => (
+                  {arena.modalities.map((mod: string) => (
                     <span key={mod} className="text-[8px] bg-sh-green/20 text-sh-green px-2 py-0.5 rounded font-bold uppercase">{mod}</span>
                   ))}
                 </div>
-                <div className="pt-3 border-t border-white/5 flex justify-between items-center">
-                   <span className="text-[10px] text-gray-500 uppercase font-bold">👤 {m.responsavel}</span>
-                   <button className="text-sh-neon text-[10px] font-black uppercase underline decoration-sh-green underline-offset-4">Falar no Whats</button>
-                </div>
+                <a 
+                  href={arena.contact_link} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="text-sh-neon text-[10px] font-black uppercase underline decoration-sh-green underline-offset-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Falar com Coordenador
+                </a>
               </div>
             ))}
           </div>
         </div>
 
-        {/* COLUNA DIREITA: O "MAPA" (STYLIZED MOCKUP) */}
-        <div className="lg:col-span-2 relative min-h-[400px] bg-sh-black rounded-3xl border border-sh-green/30 overflow-hidden bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
-          {/* Efeito de Scanline/Radar */}
-          <div className="absolute inset-0 bg-gradient-to-b from-sh-green/5 to-transparent pointer-events-none"></div>
-          
-          <div className="absolute inset-0 flex items-center justify-center">
-            {/* Aqui simulamos um mapa do Brasil simplificado ou uma grade tecnológica */}
-            <div className="relative w-full h-full flex items-center justify-center opacity-40">
-               <div className="absolute w-[80%] h-[80%] border border-sh-green/10 rounded-full animate-ping"></div>
-               <div className="absolute w-[60%] h-[60%] border border-sh-green/5 rounded-full"></div>
-               <p className="text-sh-green/20 font-black text-8xl italic uppercase select-none">MAPA SH</p>
-            </div>
+        <div className="lg:col-span-2 min-h-[500px] bg-sh-black rounded-3xl border border-sh-green/30 relative overflow-hidden z-0">
+          <MapContainer 
+            center={mapCenter} 
+            zoom={4} 
+            style={{ height: '100%', width: '100%', background: '#000' }}
+            zoomControl={false}
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; OpenStreetMap contributors'
+            />
+            
+            <FlyToLocation center={mapCenter} />
 
-            {/* PONTOS NO MAPA (Pins dinâmicos baseados na lista) */}
-            {missoesFiltradas.map((m, i) => (
-              <div 
-                key={m.id} 
-                className="absolute animate-bounce"
-                style={{ 
-                  top: `${30 + (i * 15)}%`, 
-                  left: `${20 + (i * 20)}%` 
-                }}
-              >
-                <div className="w-4 h-4 bg-sh-neon rounded-full shadow-[0_0_15px_#d7f205]"></div>
-                <div className="absolute top-6 -left-4 bg-sh-neon text-sh-black text-[10px] font-black px-2 py-1 rounded whitespace-nowrap uppercase italic">
-                  {m.cidade}
-                </div>
-              </div>
+            {arenasFiltradas.map((arena) => (
+              arena.latitude && (
+                <Marker 
+                  key={arena.id} 
+                  position={[arena.latitude, arena.longitude]}
+                  icon={neonIcon}
+                >
+                  <Popup>
+                    <div className="text-black font-bold uppercase p-1">
+                      {arena.city} <br/>
+                      <span className="text-[10px] text-gray-600">{arena.location_name}</span>
+                    </div>
+                  </Popup>
+                </Marker>
+              )
             ))}
-          </div>
+          </MapContainer>
           
-          <div className="absolute bottom-6 left-6 right-6 p-4 bg-sh-black/80 backdrop-blur-md border border-sh-green/20 rounded-2xl">
-            <p className="text-[10px] text-sh-green font-bold uppercase tracking-widest leading-none">Status da Rede</p>
-            <p className="text-white font-black italic text-xl uppercase tracking-tighter">{missoesFiltradas.length} Arenas Ativas</p>
+          <div className="absolute top-6 right-6 z-[1000] bg-sh-black/80 p-3 rounded-xl border border-sh-green/20 backdrop-blur-sm pointer-events-none">
+             <p className="text-sh-green font-black italic uppercase text-xs tracking-tighter">Brasil SH</p>
           </div>
         </div>
-
       </div>
     </div>
   );

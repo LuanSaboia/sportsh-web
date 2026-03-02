@@ -1,5 +1,3 @@
-// src/pages/CentralDocumentos.tsx
-
 const categorias = [
   {
     titulo: "Institucional",
@@ -38,7 +36,7 @@ const categorias = [
 export const CentralDocumentos = () => {
   return (
     <div className="py-10 animate-fadeIn">
-      {/* HEADER */}
+
       <div className="mb-12">
         <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter">
           Central de <span className="text-sh-neon">Documentos</span>
@@ -48,7 +46,6 @@ export const CentralDocumentos = () => {
         </p>
       </div>
 
-      {/* GRID DE CATEGORIAS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {categorias.map((cat, idx) => (
           <div key={idx} className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-sh-neon/30 transition-all">
@@ -80,7 +77,6 @@ export const CentralDocumentos = () => {
         ))}
       </div>
 
-      {/* AVISO DO MANUAL */}
       <div className="mt-12 p-8 border-2 border-dashed border-sh-green/30 rounded-3xl flex flex-col md:flex-row items-center gap-6 bg-sh-green/5">
         <div className="text-5xl">💡</div>
         <div>

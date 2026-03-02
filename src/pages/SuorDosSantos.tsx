@@ -1,5 +1,3 @@
-// src/pages/SuorDosSantos.tsx
-
 const reels = [
   { id: 1, titulo: "Disciplina e Oração", autor: "@pjj_oficial", thumb: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80" },
   { id: 2, titulo: "Suor que Oferta", autor: "@sh_fortaleza", thumb: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=400&q=80" },
@@ -16,7 +14,7 @@ const fotos = [
 export const SuorDosSantos = () => {
   return (
     <div className="py-10 animate-fadeIn">
-      {/* HEADER */}
+      
       <div className="mb-12">
         <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-sh-neon">
           Suor dos <span className="text-white">Santos</span>
@@ -26,7 +24,6 @@ export const SuorDosSantos = () => {
         </p>
       </div>
 
-      {/* SEÇÃO REELS (VÍDEOS VERTICAIS) */}
       <section className="mb-16">
         <h3 className="text-sh-neon font-black uppercase text-xs tracking-widest mb-6 flex items-center gap-2">
           <span className="w-8 h-[2px] bg-sh-neon"></span> Web-Série
@@ -50,7 +47,6 @@ export const SuorDosSantos = () => {
         </div>
       </section>
 
-      {/* SEÇÃO MURAL (GALERIA DE FOTOS) */}
       <section>
         <h3 className="text-sh-green font-black uppercase text-xs tracking-widest mb-6 flex items-center gap-2">
           <span className="w-8 h-[2px] bg-sh-green"></span> Mural da Arena
@@ -61,7 +57,6 @@ export const SuorDosSantos = () => {
               <img src={foto} alt={`Ação ${index}`} className="w-full h-auto grayscale hover:grayscale-0 transition-all duration-500" />
             </div>
           ))}
-          {/* CARD DE FEEDBACK/ENVIO */}
           <div className="break-inside-avoid bg-sh-neon p-6 rounded-2xl text-sh-black text-center group cursor-pointer">
             <h4 className="font-black uppercase italic text-xl leading-none mb-2">Envie seu Registro</h4>
             <p className="text-[10px] font-bold uppercase mb-4 tracking-tighter leading-tight text-sh-black/70 italic">Marque @SPORTSH e apareça no mural</p>

@@ -1,12 +1,10 @@
-// src/pages/PlaylistsDeFogo.tsx
-
 export const PlaylistsDeFogo = () => {
-  // ID de uma playlist exemplo (pode ser substituído pela oficial do SPORTSH depois)
-  const playlistId = "37i9dQZF1DX8mBR9U17m9G"; // Exemplo: Christian Workout
+  
+  const playlistId = "37i9dQZF1DX8mBR9U17m9G";
 
   return (
     <div className="py-10 animate-fadeIn min-h-[80vh] flex flex-col">
-      {/* HEADER */}
+
       <div className="mb-8">
         <h1 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter">
           Playlists <span className="text-sh-neon">de Fogo</span>
@@ -16,7 +14,6 @@ export const PlaylistsDeFogo = () => {
         </p>
       </div>
 
-      {/* PLAYER SPOTIFY */}
       <div className="flex-1 bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl shadow-sh-green/5">
         <iframe
           src={`https://open.spotify.com/embed/playlist/12E7uzxnyyCzC70uNCio5z?utm_source=generator&theme=0`}
@@ -29,7 +26,6 @@ export const PlaylistsDeFogo = () => {
         ></iframe>
       </div>
 
-      {/* DICA DE TREINO */}
       <div className="mt-8 p-6 bg-sh-neon rounded-2xl flex items-center gap-4">
         <div className="text-3xl">🎧</div>
         <div>
