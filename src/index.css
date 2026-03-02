@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Já vamos deixar o fundo padrão do site como SH-Black */
+body {
+  @apply bg-sh-black text-white antialiased;
+}
