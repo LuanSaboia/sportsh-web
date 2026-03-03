@@ -2,7 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Já vamos deixar o fundo padrão do site como SH-Black */
 body {
   @apply bg-sh-black text-white antialiased;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.2s ease-out forwards;
 }

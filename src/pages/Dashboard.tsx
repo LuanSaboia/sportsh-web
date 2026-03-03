@@ -14,14 +14,60 @@ export const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ physical: 0, spiritual: 0, evangelization: 0 });
     const METAS = {
-        fisico: 500, 
-        espiritual: 500 
+        fisico: 500,
+        espiritual: 500
     };
 
     const porcentagemFisica = Math.min((stats.physical / METAS.fisico) * 100, 100);
-    
+
     const totalEspiritual = stats.spiritual + stats.evangelization;
     const porcentagemEspiritual = Math.min((totalEspiritual / METAS.espiritual) * 100, 100);
+    const [uploading, setUploading] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+    const [caption, setCaption] = useState("");
+
+    const handleUpload = async () => {
+        try {
+            if (!file) return alert("Selecione uma foto primeiro!");
+            setUploading(true);
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Utilizador não encontrado");
+
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('suor-posts')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('suor-posts')
+                .getPublicUrl(filePath);
+
+            const { error: dbError } = await supabase
+                .from('posts')
+                .insert({
+                    user_id: user.id,
+                    image_url: publicUrl,
+                    caption: caption,
+                    mission: profile?.mission
+                });
+
+            if (dbError) throw dbError;
+
+            alert("Foto publicada no Mural!");
+            setFile(null);
+            setCaption("");
+        } catch (error: any) {
+            alert(error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
 
     async function getStats() {
         const { data: { user } } = await supabase.auth.getUser();
@@ -127,7 +173,7 @@ export const Dashboard = () => {
                         <div className="space-y-2">
                             <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
                                 <span>Performance Física</span>
-                                
+
                                 <span className="text-sh-green">{Math.round(porcentagemFisica)}%</span>
                             </div>
                             <div className="h-4 bg-sh-black rounded-full overflow-hidden border border-white/5">
@@ -155,6 +201,28 @@ export const Dashboard = () => {
                             * Dica do Treinador: "Não adianta ter pernas fortes se a alma está cansada. Dedique tempo à oração hoje!"
                         </p>
                     </div>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-6 rounded-3xl mt-8">
+                    <h3 className="text-sh-neon font-black uppercase text-xs tracking-widest mb-4">Postar no Suor dos Santos</h3>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        className="block w-full text-xs text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-sh-neon file:text-sh-black cursor-pointer mb-4"
+                    />
+                    <textarea
+                        placeholder="Escreva uma legenda ou testemunho..."
+                        value={caption}
+                        onChange={(e) => setCaption(e.target.value)}
+                        className="w-full bg-sh-black/50 border border-white/10 rounded-xl p-4 text-white text-sm outline-none focus:border-sh-neon mb-4"
+                    />
+                    <button
+                        onClick={handleUpload}
+                        disabled={uploading}
+                        className="w-full bg-sh-green text-sh-black font-black uppercase italic py-3 rounded-xl hover:scale-105 transition-all disabled:opacity-50"
+                    >
+                        {uploading ? 'A Enviar...' : 'Publicar no Mural'}
+                    </button>
                 </div>
             </div>
 
