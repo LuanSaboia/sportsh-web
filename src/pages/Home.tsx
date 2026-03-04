@@ -43,7 +43,7 @@ export const Home = () => {
   return (
     <div className="flex flex-col gap-12 md:gap-24 pb-20">
 
-      <section className="relative w-full overflow-hidden rounded-[2rem] md:rounded-[3rem] border border-white/10 bg-sh-black min-h-[700px] flex items-center">
+      <section className="relative w-full overflow-hidden rounded-[2rem] md:rounded-[3rem] border border-white/10 bg-sh-black h-[750px] md:h-[800px] flex items-center">
 
         {loading ? (
           <div className="w-full text-center text-sh-neon font-black animate-pulse uppercase tracking-widest">
@@ -57,15 +57,19 @@ export const Home = () => {
                 key={`bg-${slide.id}`}
                 className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-40' : 'opacity-0'}`}
               >
-                <img src={slide.image_url} className="w-full h-full object-cover grayscale" alt={slide.title} />
+                <img
+                  src={slide.image_url}
+                  className="w-full h-full object-cover object-center grayscale"
+                  alt={slide.title}
+                />
                 <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-sh-black via-sh-black/90 md:via-sh-black/70 to-transparent"></div>
               </div>
             ))}
 
-            <div className="relative z-10 w-full px-6 md:px-20 py-20">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="relative z-10 w-full px-6 md:px-20 h-full flex items-center">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center w-full">
 
-                <div className="lg:col-span-7 space-y-6 md:space-y-8">
+                <div className="lg:col-span-7 h-[400px] flex flex-col justify-center">
                   {slides.map((slide, index) => (
                     <div
                       key={`content-${slide.id}`}
@@ -75,14 +79,14 @@ export const Home = () => {
                         {slide.category}
                       </span>
 
-                      <h1 className="text-5xl md:text-7xl lg:text-8xl font-black italic text-white uppercase tracking-tighter leading-[0.9] mb-6">
+                      <h1 className="text-5xl md:text-7xl lg:text-8xl font-black italic text-white uppercase tracking-tighter leading-[0.9] mb-6 line-clamp-3">
                         {slide.title.split(' ')[0]} <br />
                         <span className="text-sh-neon">
                           {slide.title.split(' ').slice(1).join(' ')}
                         </span>
                       </h1>
 
-                      <p className="text-gray-400 font-bold text-base md:text-xl max-w-xl italic uppercase tracking-tight leading-snug mb-8">
+                      <p className="text-gray-400 font-bold text-base md:text-xl max-w-xl italic uppercase tracking-tight leading-snug mb-8 line-clamp-2">
                         {slide.subtitle}
                       </p>
 

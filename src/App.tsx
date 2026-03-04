@@ -13,6 +13,7 @@ import supabase from './lib/supabase';
 import { AdminPanel } from './pages/AdminPanel';
 import { Footer } from './components/Footer';
 import { NewsPage } from './pages/NewsPage';
+import { NewsDetails } from './pages/NewsDetails';
 
 function App() {
   const [session, setSession] = useState<any>(null);
@@ -141,6 +142,7 @@ function App() {
           <Route path="/documentos" element={<CentralDocumentos />} />
           <Route path="/vestiario" element={<Vestiario />} />
           <Route path="/noticias" element={<NewsPage />} />
+          <Route path="/noticias/:id" element={<NewsDetails />} />
 
           <Route
             path="/dashboard"

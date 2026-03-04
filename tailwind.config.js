@@ -10,6 +10,7 @@ export default {
         'sh-green': '#21a551',    // Verde Oficial
         'sh-black': '#000000',    // Preto Fundo
         'sh-neon': '#d7f205',     // Verde Limão/Destaque
+        'sh-white': '#e4e4e4'     // Branco Gelo
       },
       fontFamily: {
         'urban': ['Inter', 'sans-serif'],
