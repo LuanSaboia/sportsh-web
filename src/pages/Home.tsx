@@ -161,7 +161,7 @@ export const Home = () => {
         <div className="max-w-3xl mx-auto space-y-8">
           <span className="text-sh-green font-black uppercase tracking-[0.3em] text-[10px]">O que a Igreja diz</span>
           <blockquote className="text-2xl md:text-4xl font-black italic uppercase tracking-tight text-white leading-tight">
-            "O esporte é um ginásio de disciplina, um caminho de educação para os valores humanos e espirituais."
+            "Ver o esporte como um caminho de vida que os ajuda a construir uma comunidade mais unida e a levar adiante os valores da vida cristã..."
           </blockquote>
           <cite className="block text-sh-neon font-bold not-italic uppercase text-xs tracking-widest">
             — Papa Francisco

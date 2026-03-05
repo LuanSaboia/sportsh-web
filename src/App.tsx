@@ -14,6 +14,7 @@ import { AdminPanel } from './pages/AdminPanel';
 import { Footer } from './components/Footer';
 import { NewsPage } from './pages/NewsPage';
 import { NewsDetails } from './pages/NewsDetails';
+import { Settings } from './pages/Settings';
 
 function App() {
   const [session, setSession] = useState<any>(null);
@@ -59,7 +60,11 @@ function App() {
 
         <nav className="flex justify-between items-center py-8 sticky top-0 bg-sh-black/80 backdrop-blur-md z-[100] border-b border-sh-green/20 px-4 rounded-b-3xl">
           <Link to="/" className="font-black italic text-2xl tracking-tighter">
-            SPORT<span className="text-sh-neon">SH</span>
+            <img
+              src="/src/assets/sportsh.png"
+              alt="logo-sportsh"
+              className="h-8 md:h-8 w-auto object-contain"
+            />
           </Link>
 
           <div className="hidden lg:flex items-center gap-8 uppercase font-bold text-[10px] tracking-[0.15em]">
@@ -69,6 +74,10 @@ function App() {
             <Link to="/mapa" className="hover:text-sh-neon transition-colors">Arena SH</Link>
             <Link to="/playlist" className="hover:text-sh-neon transition-colors">Playlist</Link>
             <Link to="/documentos" className="hover:text-sh-neon transition-colors">Documentos</Link>
+            {!session ? (
+              <Link to="/vestiario" className="text-sh-black bg-sh-neon px-4 py-1 rounded-full hover:scale-105 transition-transform">Vestiário</Link>)
+              : <></>
+            }
 
             {session && (
               <div
@@ -76,12 +85,16 @@ function App() {
                 onMouseEnter={() => setIsDropdownOpen(true)}
                 onMouseLeave={() => setIsDropdownOpen(false)}
               >
-                
+
                 <button
                   className="flex items-center gap-3 bg-white/5 border border-white/10 p-1 pr-4 rounded-full hover:bg-white/10 transition-all cursor-default"
                 >
-                  <div className="w-8 h-8 bg-sh-neon rounded-full flex items-center justify-center text-sh-black font-black italic">
-                    {profile?.full_name?.charAt(0) || 'A'}
+                  <div className="w-8 h-8 bg-sh-neon rounded-full overflow-hidden flex items-center justify-center text-sh-black font-black italic">
+                    {profile?.avatar_url ? (
+                      <img src={profile.avatar_url} className="w-full h-full object-cover" alt="" />
+                    ) : (
+                      <span>{profile?.full_name?.charAt(0) || 'A'}</span>
+                    )}
                   </div>
                   <span className="text-[9px] tracking-widest">
                     {profile?.full_name?.split(' ')[0] || 'Atleta'}
@@ -117,6 +130,14 @@ function App() {
                             <span>🛡️</span> Painel Admin
                           </Link>
                         )}
+
+                        <Link
+                          to="/settings"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-[10px] font-black uppercase hover:bg-sh-neon hover:text-sh-black rounded-xl transition-all"
+                        >
+                          <span>⚙️</span> Configurações
+                        </Link>
 
                         <button
                           onClick={handleLogout}
@@ -157,6 +178,15 @@ function App() {
             path="/admin"
             element={
               profile?.role === 'coordenador' ? <AdminPanel /> : <Navigate to="/" />
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
             }
           />
         </Routes>

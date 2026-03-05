@@ -9,6 +9,9 @@ export const AdminPanel = () => {
   const [docForm, setDocForm] = useState({ name: '', category: 'Institucional' });
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const MODALIDADES_DISPONIVEIS = ["Crossfit", "Futsal", "Vôlei", "Corrida", "Funcional", "Natação", "Trilha"];
+  const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
+  const [newArena, setNewArena] = useState({ name: '', city: '', address: '', mission: '', schedule: '' });
 
   const buscarUsuarios = async () => {
     setLoading(true);
@@ -54,7 +57,7 @@ export const AdminPanel = () => {
     setIsPublishing(true);
 
     try {
-      
+
       const coverPath = `covers/${Date.now()}-${coverFile.name}`;
       await supabase.storage.from('news-media').upload(coverPath, coverFile);
       const { data: { publicUrl: coverUrl } } = supabase.storage.from('news-media').getPublicUrl(coverPath);
@@ -88,7 +91,7 @@ export const AdminPanel = () => {
 
     setIsUploadingDoc(true);
     try {
-      
+
       const fileExt = docFile.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `oficiais/${fileName}`;
@@ -122,6 +125,27 @@ export const AdminPanel = () => {
       alert("Erro no upload: " + e.message);
     } finally {
       setIsUploadingDoc(false);
+    }
+  };
+
+  const handleCreateArena = async () => {
+    if (!newArena.name || !newArena.city) return alert("Nome e Cidade são obrigatórios!");
+
+    const { error } = await supabase.from('arenas').insert({
+      location_name: newArena.name,
+      city: newArena.city,
+      address: newArena.address,
+      mission: newArena.mission,
+      schedule: newArena.schedule,
+      activities: selectedActivities
+    });
+
+    if (!error) {
+      alert("Arena fundada com sucesso!");
+      setNewArena({ name: '', city: '', address: '', mission: '', schedule: '' });
+      setSelectedActivities([]);
+    } else {
+      alert("Erro ao criar arena: " + error.message);
     }
   };
 
@@ -205,6 +229,34 @@ export const AdminPanel = () => {
             className="md:col-span-2 bg-sh-green text-sh-black font-black uppercase italic py-4 rounded-2xl hover:bg-sh-neon transition-all"
           >
             {isPublishing ? "Publicando..." : "Publicar Notícia"}
+          </button>
+        </div>
+      </section>
+
+      <section className="mt-12 bg-white/5 p-8 rounded-[2rem] border border-white/10">
+        <h3 className="text-sh-neon font-black uppercase italic text-xl mb-8">Fundar Nova Arena</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <input type="text" placeholder="Nome do Local" className="bg-sh-black border border-white/10 p-4 rounded-xl outline-none focus:border-sh-green" value={newArena.name} onChange={e => setNewArena({ ...newArena, name: e.target.value })} />
+          <input type="text" placeholder="Cidade" className="bg-sh-black border border-white/10 p-4 rounded-xl outline-none focus:border-sh-green" value={newArena.city} onChange={e => setNewArena({ ...newArena, city: e.target.value })} />
+          <input type="text" placeholder="Horário (Ex: Seg a Sex às 19h)" className="bg-sh-black border border-white/10 p-4 rounded-xl outline-none focus:border-sh-green" value={newArena.schedule} onChange={e => setNewArena({ ...newArena, schedule: e.target.value })} />
+
+          <div className="md:col-span-2 space-y-3">
+            <label className="text-[10px] font-black uppercase text-gray-500 ml-2">Marque as Modalidades</label>
+            <div className="flex flex-wrap gap-2">
+              {MODALIDADES_DISPONIVEIS.map(m => (
+                <button
+                  key={m}
+                  onClick={() => setSelectedActivities(prev => prev.includes(m) ? prev.filter(a => a !== m) : [...prev, m])}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${selectedActivities.includes(m) ? 'bg-sh-green text-sh-black' : 'bg-white/5 text-gray-500 border border-white/10'}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={handleCreateArena} className="md:col-span-2 bg-sh-green text-sh-black font-black uppercase italic py-4 rounded-2xl hover:bg-sh-neon transition-all">
+            Confirmar Fundação da Arena
           </button>
         </div>
       </section>

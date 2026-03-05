@@ -1,45 +1,26 @@
 import { useEffect, useState, useMemo } from 'react';
 import supabase from '../lib/supabase';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-
-const INITIAL_CENTER: [number, number] = [-15.78, -47.92];
-
-const neonIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-function FlyToLocation({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (center) map.flyTo(center, 12, { duration: 2 });
-  }, [center, map]);
-  return null;
-}
 
 export const ArenaSH = () => {
   const [arenas, setArenas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
-  const [mapCenter, setMapCenter] = useState<[number, number]>(INITIAL_CENTER);
 
   useEffect(() => {
-    const fetchArenas = async () => {
-      try {
-        const { data, error } = await supabase.from('arenas').select('*');
-        if (!error) setArenas(data || []);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchArenas();
   }, []);
+
+  async function fetchArenas() {
+    try {
+      const { data, error } = await supabase
+        .from('arenas')
+        .select('*')
+        .order('city');
+      if (!error) setArenas(data || []);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const arenasFiltradas = useMemo(() => {
     return arenas.filter(a => 
@@ -49,81 +30,90 @@ export const ArenaSH = () => {
   }, [busca, arenas]);
 
   return (
-    <div className="h-[calc(100vh-120px)] py-6 flex flex-col md:flex-row gap-6 animate-fadeIn">
-      
-      <aside className="w-full md:w-96 flex flex-col gap-6 order-2 md:order-1">
-        <div className="bg-white/5 border border-white/10 p-6 rounded-[2rem] space-y-4">
-          <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">
-            Encontre sua <span className="text-sh-neon">Arena</span>
-          </h2>
-          <div className="relative">
-            <input 
-              type="text" 
-              placeholder="Buscar cidade ou local..." 
-              className="w-full bg-sh-black border border-white/10 p-4 rounded-2xl outline-none focus:border-sh-green transition-all text-sm"
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-            />
-          </div>
+    <div className="py-10 animate-fadeIn min-h-screen">
+      <header className="mb-16 space-y-8">
+        <div className="border-l-4 border-sh-neon pl-6">
+          <h1 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter leading-none">
+            Nossa <span className="text-sh-neon">Arena</span>
+          </h1>
+          <p className="text-gray-500 font-bold uppercase tracking-[0.2em] text-[10px] mt-2 italic">
+            Centros de Treinamento e Pontos de Encontro Oficiais
+          </p>
         </div>
-
-        <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
-          {loading ? (
-            <p className="text-sh-green font-black uppercase text-[10px] animate-pulse">Sincronizando satélites...</p>
-          ) : (
-            arenasFiltradas.map(arena => (
-              <button 
-                key={arena.id}
-                onClick={() => setMapCenter([arena.latitude, arena.longitude])}
-                className="w-full text-left bg-white/5 border border-white/5 p-5 rounded-2xl hover:bg-sh-green/10 hover:border-sh-green/30 transition-all group"
-              >
-                <p className="text-[10px] font-black uppercase text-sh-green tracking-widest">{arena.city}</p>
-                <h4 className="font-bold text-white uppercase text-sm mt-1">{arena.location_name}</h4>
-                <div className="flex items-center gap-2 mt-3 text-[10px] text-gray-500 font-bold uppercase">
-                  <span>📍 {arena.address || 'Ver no mapa'}</span>
-                </div>
-              </button>
-            ))
-          )}
-        </div>
-      </aside>
-
-      <section className="flex-1 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl relative z-0 order-1 md:order-2 min-h-[400px]">
-        <MapContainer 
-          center={INITIAL_CENTER} 
-          zoom={4} 
-          style={{ height: '100%', width: '100%', background: '#0b0b0b' }}
-          zoomControl={false}
-        >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; OpenStreetMap contributors'
-          />
-          
-          <FlyToLocation center={mapCenter} />
-
-          {arenasFiltradas.map((arena) => (
-            arena.latitude && (
-              <Marker 
-                key={arena.id} 
-                position={[arena.latitude, arena.longitude]}
-                icon={neonIcon}
-              >
-                <Popup className="custom-popup">
-                  <div className="p-2 font-urban text-center">
-                    <h5 className="font-black italic uppercase text-sh-black text-sm">{arena.location_name}</h5>
-                    <p className="text-[9px] font-bold uppercase text-gray-500">{arena.city}</p>
-                  </div>
-                </Popup>
-              </Marker>
-            )
-          ))}
-        </MapContainer>
         
-        <div className="absolute top-6 right-6 z-[1000] bg-sh-black/80 p-3 rounded-xl border border-sh-green/20 backdrop-blur-md">
-           <p className="text-sh-green font-black uppercase text-[8px] tracking-widest">Radar SPORTSH Online</p>
+        <div className="max-w-xl relative">
+          <input 
+            type="text" 
+            placeholder="Filtrar por Cidade ou Missão..." 
+            className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl text-white outline-none focus:border-sh-green transition-all italic text-sm"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
         </div>
-      </section>
+      </header>
+
+      {loading ? (
+        <div className="flex flex-col items-center py-20 gap-4 text-sh-neon font-black uppercase text-[10px] animate-pulse">
+           Localizando Arenas...
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {arenasFiltradas.map((arena) => (
+            <div 
+              key={arena.id}
+              className="bg-white/5 border border-white/10 rounded-[2.5rem] overflow-hidden group hover:border-sh-green/50 transition-all duration-500 flex flex-col"
+            >
+              <div className="h-40 bg-sh-black relative flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-t from-sh-black to-transparent z-10"></div>
+                <span className="text-9xl font-black italic text-white/5 absolute -right-4 -bottom-8 select-none">SH</span>
+                <span className="bg-sh-neon text-sh-black px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest z-20 absolute bottom-6 left-8">
+                  {arena.city}
+                </span>
+              </div>
+
+              <div className="p-8 space-y-6 flex-1 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-2xl font-black italic uppercase text-white leading-tight group-hover:text-sh-neon transition-colors">
+                      {arena.location_name}
+                    </h3>
+                    <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest mt-1">
+                      📍 {arena.address || 'Local a definir'}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {arena.activities?.map((act: string, idx: number) => (
+                      <span key={idx} className="bg-sh-green/10 border border-sh-green/20 px-3 py-1 rounded-lg text-[8px] font-black uppercase text-sh-green tracking-tighter">
+                        ⚡ {act}
+                      </span>
+                    ))}
+                  </div>
+
+                  {arena.schedule && (
+                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <p className="text-[8px] text-gray-500 font-black uppercase mb-1 tracking-widest">Horário de Treino</p>
+                      <p className="text-[10px] text-white font-bold uppercase italic">{arena.schedule}</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+                  <span className="text-[8px] font-black uppercase text-gray-600 italic">Missão {arena.mission || arena.city}</span>
+                  <a 
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(arena.location_name + ' ' + (arena.address || arena.city))}`}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="bg-white text-sh-black px-6 py-3 rounded-xl font-black uppercase italic text-[9px] hover:bg-sh-neon transition-all hover:scale-110 active:scale-95 shadow-xl"
+                  >
+                    Abrir GPS →
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
