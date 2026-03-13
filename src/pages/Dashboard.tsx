@@ -12,6 +12,7 @@ export const Dashboard = () => {
     const [uploading, setUploading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
     const [caption, setCaption] = useState("");
+    const [youtubeLink, setYoutubeLink] = useState("");
 
     const METAS = { fisico: 500, espiritual: 500 };
 
@@ -46,7 +47,7 @@ export const Dashboard = () => {
 
     const handleCheckIn = async (type: 'physical' | 'spiritual' | 'evangelization', desc: string) => {
         try {
-            
+
             await registerActivity(type, desc);
             alert(`${desc} registrado!`);
             fetchDashboardData();
@@ -55,24 +56,62 @@ export const Dashboard = () => {
         }
     };
 
-    const handleUpload = async () => {
-        if (!file) return alert("Selecione uma foto!");
+    const getYoutubeId = (url: string) => {
+        const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/i;
+        const match = url.match(regExp);
+        return match ? match[1] : null;
+    };
+
+    const handlePostSuor = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!caption) return alert("Escreva uma legenda!");
+        if (!file && !youtubeLink) return alert("Selecione um arquivo ou cole um link!");
+
         setUploading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
-            await supabase.storage.from('suor-posts').upload(fileName, file);
-            const { data: { publicUrl } } = supabase.storage.from('suor-posts').getPublicUrl(fileName);
-            await supabase.from('posts').insert({
+            let finalImageUrl = "";
+            let finalExternalUrl = null;
+            let postType = "image";
+
+            if (youtubeLink) {
+                const ytId = getYoutubeId(youtubeLink);
+                if (ytId) {
+                    postType = "youtube";
+                    finalExternalUrl = youtubeLink;
+                    finalImageUrl = `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`;
+                } else {
+                    postType = "image";
+                    finalImageUrl = youtubeLink;
+                }
+            } else if (file) {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage.from('suor-posts').upload(fileName, file);
+                if (uploadError) throw uploadError;
+                const { data: { publicUrl } } = supabase.storage.from('suor-posts').getPublicUrl(fileName);
+                finalImageUrl = publicUrl;
+                postType = file.type.startsWith('video/') ? 'video' : 'image';
+            }
+
+            const { error: dbError } = await supabase.from('posts').insert({
                 user_id: user?.id,
-                image_url: publicUrl,
+                image_url: finalImageUrl,
+                external_url: finalExternalUrl,
+                post_type: postType,
                 caption: caption,
-                mission: profile?.mission
+                mission: profile?.mission || 'Arena Geral'
             });
-            alert("Publicado no Mural!");
-            setFile(null); setCaption("");
-        } finally { setUploading(false); }
+
+            if (dbError) throw dbError;
+            alert("Suor registrado! 🔥");
+            setFile(null); setCaption(""); setYoutubeLink("");
+            fetchDashboardData();
+        } catch (error: any) {
+            alert("Erro: " + error.message);
+        } finally {
+            setUploading(false);
+        }
     };
 
     const porcentagemFisica = Math.min((stats.physical / METAS.fisico) * 100, 100);
@@ -140,16 +179,41 @@ export const Dashboard = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem]">
-                        <h3 className="text-sh-neon font-black uppercase text-xs tracking-widest mb-6">Suor dos Santos</h3>
-                        <div className="space-y-4">
-                            <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="block w-full text-[10px] text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-sh-neon file:text-sh-black file:font-black" />
-                            <textarea placeholder="Relate sua oferta..." value={caption} onChange={(e) => setCaption(e.target.value)} className="w-full bg-sh-black/50 border border-white/10 rounded-xl p-4 text-white text-sm outline-none focus:border-sh-neon h-20" />
-                            <button onClick={handleUpload} disabled={uploading} className="w-full bg-sh-green text-sh-black font-black uppercase italic py-3 rounded-xl hover:bg-sh-neon transition-all disabled:opacity-50">
-                                {uploading ? 'Enviando...' : 'Publicar Registro'}
-                            </button>
-                        </div>
-                    </div>
+                    <section className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] relative overflow-hidden">
+                        <h3 className="text-white font-black uppercase italic text-lg mb-6 tracking-tighter">📸 Registrar Suor</h3>
+                        <form onSubmit={handlePostSuor} className="space-y-4">
+                            <textarea
+                                placeholder="Conte como foi sua oferta hoje..."
+                                className="w-full bg-sh-black border border-white/10 p-4 rounded-2xl text-white outline-none focus:border-sh-neon transition-all italic text-sm min-h-[100px]"
+                                value={caption}
+                                onChange={(e) => setCaption(e.target.value)}
+                            />
+
+                            {/* Campo para link (YouTube ou Imagem Externa) */}
+                            <input
+                                type="text"
+                                placeholder="Ou cole um link (YouTube, Shorts ou Imagem)..."
+                                className="w-full bg-sh-black border border-white/10 p-4 rounded-xl text-white outline-none focus:border-sh-green transition-all text-[10px] font-bold uppercase"
+                                value={youtubeLink}
+                                onChange={(e) => setYoutubeLink(e.target.value)}
+                            />
+
+                            <div className="flex flex-col md:flex-row gap-4">
+                                <label className="flex-1 bg-white/5 border border-dashed border-white/20 p-4 rounded-2xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-all">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                                        {file ? `✅ ${file.name}` : "Ou subir arquivo (Foto/Vídeo)"}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*,video/*" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                                </label>
+                                <button
+                                    disabled={uploading}
+                                    className="bg-white text-sh-black px-10 py-4 rounded-2xl font-black uppercase italic text-xs hover:bg-sh-neon transition-all disabled:opacity-50"
+                                >
+                                    {uploading ? 'Processando...' : 'Publicar Agora'}
+                                </button>
+                            </div>
+                        </form>
+                    </section>
                 </div>
 
                 <div className="lg:col-span-4 space-y-6">

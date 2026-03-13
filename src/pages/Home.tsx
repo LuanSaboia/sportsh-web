@@ -8,6 +8,40 @@ export const Home = () => {
   const [slides, setSlides] = useState<any[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [recentPosts, setRecentPosts] = useState<any[]>([]); // Novo estado
+
+  useEffect(() => {
+    fetchData();
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+  }, []);
+
+  async function fetchData() {
+    setLoading(true);
+    try {
+      // 1. Notícias em Destaque
+      const { data: newsData } = await supabase
+        .from('news')
+        .select('*')
+        .eq('is_featured', true)
+        .order('created_at', { ascending: false });
+
+      if (newsData) setSlides(newsData);
+
+      // 2. Últimos 3 Testemunhos (Suor dos Santos)
+      const { data: postsData } = await supabase
+        .from('posts')
+        .select('*, profiles(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (postsData) setRecentPosts(postsData);
+
+    } catch (err) {
+      console.error("Erro ao carregar dados da Home:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     fetchFeaturedNews();
@@ -51,7 +85,7 @@ export const Home = () => {
           </div>
         ) : (
           <>
-          
+
             {slides.map((slide, index) => (
               <div
                 key={`bg-${slide.id}`}
@@ -169,32 +203,48 @@ export const Home = () => {
         </div>
       </section>
 
-      <section className="px-4">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <h2 className="text-4xl font-black italic uppercase leading-none">Suor dos <span className="text-sh-neon">Santos</span></h2>
-            <p className="text-sh-green font-bold uppercase text-[10px] tracking-widest mt-2">Testemunhos da Arena</p>
+      {/* SEÇÃO SUOR DOS SANTOS ITERATIVA */}
+      <section className="px-6 md:px-0">
+        <div className="flex justify-between items-end mb-10">
+          <div className="border-l-4 border-sh-neon pl-6">
+            <h2 className="text-3xl md:text-5xl font-black italic uppercase tracking-tighter text-white">Suor dos <span className="text-sh-neon">Santos</span></h2>
+            <p className="text-sh-green font-bold uppercase tracking-widest text-[10px] mt-2 italic">Testemunhos da Arena</p>
           </div>
-          <Link to="/suor-dos-santos" className="text-[10px] font-black border-b-2 border-sh-neon pb-1 uppercase hover:tracking-widest transition-all">Ver Galeria</Link>
+          <Link to="/suor-dos-santos" className="text-[10px] font-black border-b-2 border-sh-neon pb-1 uppercase hover:tracking-widest transition-all">Ver Galeria Completa</Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white/5 p-8 rounded-3xl border border-white/10 hover:border-sh-neon/30 transition-all">
-            <p className="italic text-gray-300 mb-6 leading-relaxed">"O esporte é um caminho que Deus me dá pra minha vocação e pra evangelização."</p>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-sh-neon rounded-full"></div>
-              <p className="font-bold text-white text-xs uppercase tracking-tighter">João Pedro | Guarulhos</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* CARDS DINÂMICOS */}
+          {recentPosts.map((post) => (
+            <div key={post.id} className="bg-white/5 p-6 rounded-3xl border border-white/10 flex flex-col justify-between hover:border-sh-neon/30 transition-all group">
+              <div>
+                <div className="w-full h-32 rounded-2xl overflow-hidden mb-4 bg-sh-black">
+                  <img src={post.image_url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="" />
+                </div>
+                <p className="italic text-gray-400 text-xs mb-6 leading-relaxed line-clamp-3">"{post.caption}"</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 bg-sh-neon rounded-full flex items-center justify-center text-sh-black font-black text-[10px] italic">
+                  {post.profiles?.full_name?.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-bold text-white text-[10px] uppercase tracking-tighter">{post.profiles?.full_name}</p>
+                  <p className="text-sh-green text-[8px] font-black uppercase">{post.mission}</p>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
 
+          {/* BOTÃO FIXO: CONTE SUA HISTÓRIA */}
           <Link
             to={session ? "/dashboard" : "/vestiario"}
-            className="bg-sh-neon p-8 rounded-3xl flex flex-col justify-center items-center text-center group cursor-pointer hover:scale-[1.02] transition-transform"
+            className="bg-sh-neon p-8 rounded-3xl flex flex-col justify-center items-center text-center group cursor-pointer hover:scale-[1.02] transition-transform shadow-lg shadow-sh-neon/10"
           >
             <span className="text-sh-black font-black uppercase italic text-xl mb-2">Conte sua história</span>
-            <p className="text-sh-black/60 font-bold uppercase text-[10px]">
-              {session ? "Postar no Vestiário" : "Entre no time para postar"}
-            </p>
+            <p className="text-sh-black/60 font-bold uppercase text-[8px] tracking-widest">Poste seu suor na arena</p>
+            <div className="mt-4 w-10 h-10 bg-sh-black rounded-full flex items-center justify-center text-sh-neon group-hover:scale-110 transition-transform">
+              <span className="text-xl">📸</span>
+            </div>
           </Link>
         </div>
       </section>
